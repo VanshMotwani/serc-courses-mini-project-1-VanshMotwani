@@ -1,0 +1,15 @@
+peek -l 
+warp ~
+seek hello ../
+wrap -
+warp -
+seek -e hello ../
+proclore
+ps
+proclore 11472
+echo "Hello World";hello
+echo "Hello World"
+hello
+echo "Hello World" & hello
+peek -l /home/vansh/Deskto
+seek tryingit

@@ -1,0 +1,15 @@
+seek newfold /home/vansh/Desktop
+seek testing
+seek a.out
+seek -f -e newfold
+seek -f -e seek.c
+seek seek.c
+seek -f seek.c
+seek -f -e seek.c
+seek -f warp.c
+warp ./tryingit
+warp ..
+warp
+warp ~/tryingit
+warp ../tryingit
+warp /home/vansh/Desktop
