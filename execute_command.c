@@ -24,10 +24,56 @@ void identify_and_execute(char* input, int* isFirstTime, char* home_dir, char* p
         if (token == NULL){
             break;
         }   
+        // printf("Token %d: %s| ", ck, token);
+        // ck++;
         command_line_args[cnt]=(char*)malloc(4096*sizeof(char));
         strcpy(command_line_args[cnt], token);
         cnt++;
     }
+    
+    command_line_args[cnt]=NULL;
+    
+    if (bg) {
+    // Store background command and arguments in background_processes_array
+        for (int i = 0; i < cnt; i++) {
+            background_processes_array[*num_bg_proccesses][i]= (char*)malloc(4096*sizeof(char));
+            strcpy(background_processes_array[*num_bg_proccesses][i],command_line_args[i]);
+        }
+
+        background_processes_array[*num_bg_proccesses][cnt] = NULL;
+        num_bg_proc_args[*num_bg_proccesses]=cnt;
+        (*num_bg_proccesses)++;
+    } 
+    else {
+        // Store foreground command and arguments in foreground_processes_array
+        for (int i = 0; i < cnt; i++) {
+            foreground_processes_array[i]= (char*)malloc(4096*sizeof(char));
+            strcpy(foreground_processes_array[i],command_line_args[i]);
+        }
+        foreground_processes_array[cnt] = NULL;
+    }       
+    
+}
+
+void executePipedCommandStrings(char** command_line_args, int* isFirstTime, char* home_dir, char* prev_dir_1, char* prev_dir_2, char* shell_PID, char** pasteventsarr, int* start, int* cur, int* arrlen, int* BG_PIDs, int* num_bg_proc){
+    int cnt = 0;
+    while (1){
+        if (command_line_args[cnt] != NULL){
+            cnt++;
+        }
+        else{
+            break;
+        }
+    }
+
+    if (*(isFirstTime)){
+        strcpy(prev_dir_2,home_dir);
+        strcpy(prev_dir_1, "\0");
+        *(isFirstTime)=0;
+    }
+
+    int* presenceOfFile= (int*)malloc(sizeof(int));
+    int* presenceOfDir= (int*)malloc(sizeof(int));
 
     if (strcmp(command_line_args[0], "warp") == 0){
         warp_execute(command_line_args, cnt, home_dir, prev_dir_1, prev_dir_2);
@@ -36,6 +82,7 @@ void identify_and_execute(char* input, int* isFirstTime, char* home_dir, char* p
         int aflag=0;
         int lflag=0;
         int isitpath[cnt];
+        
         for (int i=0; i<cnt; i++){
             isitpath[i]=1;
         }
@@ -63,6 +110,7 @@ void identify_and_execute(char* input, int* isFirstTime, char* home_dir, char* p
                 break;
             }
         }
+        
         if (pathindex==0){
             getcwd(cur_direct, 4096);
             peek(cur_direct, aflag, lflag, home_dir, prev_dir_1);
@@ -111,29 +159,54 @@ void identify_and_execute(char* input, int* isFirstTime, char* home_dir, char* p
         *presenceOfFile=0;
         seek_file(command_line_args, cnt, presenceOfFile, presenceOfDir);
     }
-    else{
-        command_line_args[cnt]=NULL;
-        
-        if (bg) {
-        // Store background command and arguments in background_processes_array
-            for (int i = 0; i < cnt; i++) {
-                background_processes_array[*num_bg_proccesses][i]= (char*)malloc(4096*sizeof(char));
-                strcpy(background_processes_array[*num_bg_proccesses][i],command_line_args[i]);
-            }
-
-            background_processes_array[*num_bg_proccesses][cnt] = NULL;
-            num_bg_proc_args[*num_bg_proccesses]=cnt;
-            (*num_bg_proccesses)++;
-        } 
-        else {
-            // Store foreground command and arguments in foreground_processes_array
-            for (int i = 0; i < cnt; i++) {
-                strcpy(foreground_processes_array[i],command_line_args[i]);
-            }
-
-            foreground_processes_array[cnt] = NULL;
+    else if (strcmp(command_line_args[0], "neonate") == 0){
+        if (strcmp(command_line_args[1], "-n") == 0){
+            neonate(command_line_args[2]);
+            return;
         }
-        
+        else{
+            printf("Invalid flag %s for neonate\n", command_line_args[1]);
+        }
+    }
+    else if (strcmp(command_line_args[0], "fg") == 0){
+        execute_fg(command_line_args[1]);
+        return;
+    }
+    else if (strcmp(command_line_args[0], "bg") == 0){
+        execute_bg(command_line_args[1]);
+        return;
+    }
+    else if (strcmp(command_line_args[0], "activities") == 0){
+        // for (int l = 0; l < *num_bg_proc; l++) {
+        //     int pid = BG_PIDs[l];
+        //     char processName[1000];
+
+        //     // Check if the process is running
+        //     if (kill(pid, 0) == 0) {
+        //         // Process is running
+        //         if (getProcessNameFromStatFile(pid, processName) == 0) {
+        //             printf("Process name: %s, PID: %d is running.\n", processName, pid);
+        //         } else {
+        //             printf("Failed to retrieve process name for PID: %d\n", pid);
+        //         }
+        //     } else {
+        //         // Process is not running
+        //         printf("PID: %d is not running.\n", pid);
+        //     }
+        // }
+    }
+    else if (strcmp(command_line_args[0], "ping") == 0){
+        ping(command_line_args[2], command_line_args[1]);
+        return;
+    }
+    else if (strcmp(command_line_args[0], "iMan") == 0){
+        iMan(command_line_args[1]);
+        return;
+    }
+    else{
+        execvp(command_line_args[0], command_line_args);
+        perror("execvp");
+        exit(0);
     }
 }
 

@@ -1,15 +1,15 @@
-peek -l 
+iMan sleep
+ping 20020 19
+iMan sleep
+bg 20051
+iMan sleep
+ping 20051 19
+peek -l | grep input > outfile.txt
+xt
+ls
+bg 20185
+ls
+bg 20185
+warp ./a.out
 warp ~
-seek hello ../
-wrap -
-warp -
-seek -e hello ../
-proclore
-ps
-proclore 11472
-echo "Hello World";hello
-echo "Hello World"
-hello
-echo "Hello World" & hello
-peek -l /home/vansh/Deskto
-seek tryingit
+sleep 5

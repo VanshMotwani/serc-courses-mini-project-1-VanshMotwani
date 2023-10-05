@@ -1,22 +1,27 @@
 #include "headers.h"
 
 
-void handleInput(char* input, int* isFirstTime, char* home_dir, char* prev_dir_1, char* prev_dir_2, char* shell_PID, char** pasteventsarr, int* start, int* cur, int* arrlen){
-
-    char* token= (char*)malloc(4096*sizeof(char));
-    char* input_str= (char*)malloc(4096*sizeof(char));
+void handleInput(char* input, int* isFirstTime, char* home_dir, char* prev_dir_1, char* prev_dir_2, char* shell_PID, char** pasteventsarr, int* start, int* cur, int* arrlen, int* BG_PIDs, int* num_bg_proc){
+    signal(SIGTSTP, ctrl_z_handler);
+    char* token= (char*)malloc(10000*sizeof(char));
+    char* input_str= (char*)malloc(10000*sizeof(char));
     strcpy(input_str, input);
     char** colon_tokenized= (char**)malloc(1000*sizeof(char));
     int colon_count=0;
-    colon_tokenized[0]= (char*)malloc(4096*sizeof(char));
+    colon_tokenized[0]= (char*)malloc(10000*sizeof(char));
     colon_tokenized[0]= input_str;
     colon_count++;
+
+    int* to_null= (int*)malloc(100*sizeof(int));
+    int toNULLCount = 0;
 
     int str_length= strlen(input_str);
     for (int i=0; i<str_length; i++){
         if (input_str[i] == ';'){
 
-            input_str[i]='\0';
+            // input_str[i]='\0';
+            to_null[toNULLCount]=i;
+            toNULLCount++;
             if (i+1 < str_length){
                 colon_tokenized[colon_count]= &(input_str[i+1]);
                 colon_count++;
@@ -24,35 +29,48 @@ void handleInput(char* input, int* isFirstTime, char* home_dir, char* prev_dir_1
         }   
     }
 
-    int amp_count=0;
-    char** amp_tokenized= (char**)malloc(1000*sizeof(char));
-
-    int max_background_processes = 100;
-    int max_arguments = 100;
-    int max_argument_length = 4096;
-
-    // Allocate memory for background processes array
-    char ***background_processes_array = malloc(max_background_processes * sizeof(char**));
-    for (int i = 0; i < max_background_processes; i++) {
-        background_processes_array[i] = malloc(max_arguments * sizeof(char*));
-        for (int j = 0; j < max_arguments; j++) {
-            background_processes_array[i][j] = malloc(max_argument_length * sizeof(char));
-        }
+    for (int i=0; i<toNULLCount; i++){
+        input_str[to_null[i]]='\0';
     }
+   
+    // for (int i=0; i<colon_count; i++){
+    //     printf("colon_tokenized[%d]: %s\n", i, colon_tokenized[i]);
+    // }    
 
-    // Allocate memory for foreground processes array
-    char **foreground_processes_array = malloc(max_arguments * sizeof(char*));
-    for (int i = 0; i < max_arguments; i++) {
-        foreground_processes_array[i] = malloc(max_argument_length * sizeof(char));
-    }
-
-    int* num_bg_processes;
-    int* num_bg_proc_args;
-    
     for (int i=0; i<colon_count; i++){
-        amp_count=0;
+        int amp_count=0;
+        char** amp_tokenized= (char**)malloc(1000*sizeof(char));
+
+        // int max_background_processes = 50;
+        // int max_piped_procs = 50;
+        // int max_arguments = 50;
+
+        // // Allocate memory for background processes array
+        // char ****background_processes_array = (char****)malloc(max_background_processes * sizeof(char***));
+        // for (int k = 0; k < max_background_processes; k++) {
+        //     background_processes_array[k] = (char***)malloc(max_piped_procs * sizeof(char**));
+        //     for (int j = 0; j < max_piped_procs; j++) {
+        //         background_processes_array[k][j] = (char**)malloc(max_arguments * sizeof(char*));
+        //         for (int o=0; o<max_arguments; o++){
+        //             background_processes_array[k][j][o]= (char*)malloc(10000*sizeof(char));
+        //         }
+        //     }
+        // }
+
+        // // Allocate memory for foreground processes array
+        // char ***foreground_processes_array = (char***)malloc(max_piped_procs * sizeof(char**));
+        // for (int j = 0; j < max_piped_procs; j++) {
+        //     foreground_processes_array[j] = (char**)malloc(max_arguments * sizeof(char*));
+        //     for (int k=0; k<max_arguments; k++){
+        //         foreground_processes_array[j][k]= (char*)malloc(10000*sizeof(char));
+        //     }
+        // }
+
+        // int* num_bg_processes;
+        
+        // amp_count=0;
         char* token= colon_tokenized[i]; 
-        amp_tokenized[amp_count]= (char*)malloc(4096*sizeof(char));
+        amp_tokenized[amp_count]= (char*)malloc(10000*sizeof(char));
         amp_tokenized[amp_count]= token;
         amp_count++;
 
@@ -67,38 +85,60 @@ void handleInput(char* input, int* isFirstTime, char* home_dir, char* prev_dir_1
             }   
         }
 
-        num_bg_processes= (int*)malloc(sizeof(int));
-        num_bg_proc_args= (int*)malloc((amp_count-1)*sizeof(int));
-
-        *num_bg_processes=0;
-        for (int k=0; k<amp_count-1; k++){
-            num_bg_proc_args[k]=0;
+        if (amp_count == 1){
+            // HANDLE PIPING AND I/O redirection of SELF MADE FUNCTIONS INCLUDED
+            char* newtok= (char*)malloc(10000*sizeof(char));
+            strcpy(newtok, token);    
+            runPipedCommands(newtok, isFirstTime, home_dir, prev_dir_1, prev_dir_2, shell_PID, pasteventsarr, start, cur, arrlen, BG_PIDs, num_bg_proc);
+            continue;
         }
+
+        // int num_bg_processes= 0;
+        // num_bg_processes= (int*)malloc(sizeof(int));
+        // *num_bg_processes = 0;
+
+        // int* bg_pipeCounts= (int*)malloc(100*sizeof(int));
+        // int* fg_pipeCount = (int*)malloc(sizeof(int));
+        // *fg_pipeCount = 0;
 
         for (int j=0; j<amp_count-1; j++){
-            identify_and_execute(amp_tokenized[j], isFirstTime, home_dir, prev_dir_1, prev_dir_2, shell_PID, pasteventsarr, start, cur, arrlen, 1, background_processes_array, foreground_processes_array, num_bg_processes, num_bg_proc_args);
+            char* newamp_tok= (char*)malloc(10000*sizeof(char));
+            strcpy(newamp_tok, amp_tokenized[j]);
+            // identify_and_execute(amp_tokenized[j], isFirstTime, home_dir, prev_dir_1, prev_dir_2, shell_PID, pasteventsarr, start, cur, arrlen, 1, background_processes_array, foreground_processes_array, num_bg_processes, num_bg_proc_args);
+            sortPipedCommands(newamp_tok, isFirstTime, home_dir, prev_dir_1, prev_dir_2, shell_PID, pasteventsarr, start, cur, arrlen, 1, BG_PIDs, num_bg_proc);
+            // identify_and_execute(amp_tokenized[j], isFirstTime, home_dir, prev_dir_1, prev_dir_2, shell_PID, pasteventsarr, start, cur, arrlen, 1, background_processes_array, foreground_processes_array, num_bg_processes, num_bg_proc_args);
         }
-        identify_and_execute(amp_tokenized[amp_count-1], isFirstTime, home_dir, prev_dir_1, prev_dir_2, shell_PID, pasteventsarr, start, cur, arrlen, 0, background_processes_array, foreground_processes_array, num_bg_processes, num_bg_proc_args);
-    
-        // for (int l = 0; l < *num_bg_processes; l++) {
-        //     printf("Background Process %d:\n", l);
-        //     for (int j = 0; j < num_bg_proc_args[l]; j++) {
-        //         printf("  Arg[%d]: %s\n", j, background_processes_array[l][j]);
-        //     }
-        //     printf("  Arg Count: %d\n\n", num_bg_proc_args[l]);
-        // }
+        char* newamp_tok2= (char*)malloc(10000*sizeof(char));
+        strcpy(newamp_tok2, amp_tokenized[amp_count-1]);
+        sortPipedCommands(newamp_tok2, isFirstTime, home_dir, prev_dir_1, prev_dir_2, shell_PID, pasteventsarr, start, cur, arrlen, 0, BG_PIDs, num_bg_proc);
+        // identify_and_execute(amp_tokenized[amp_count-1], isFirstTime, home_dir, prev_dir_1, prev_dir_2, shell_PID, pasteventsarr, start, cur, arrlen, 0, background_processes_array, foreground_processes_array, num_bg_processes, num_bg_proc_args);
 
-        // // Print foreground_processes_array
-        // printf("Foreground Process:\n");
-        //     for (int l = 0; foreground_processes_array[l] != NULL; l++) {
-        //         printf("  Arg[%d]: %s\n", l, foreground_processes_array[l]);
-        // }
+    // TRY TO PRINT FG AND BG ARRAYS
 
-        runBackgroundProcesses(foreground_processes_array, background_processes_array, num_bg_processes, num_bg_proc_args);
+// THE NUMBER OF BACKGROUND PROCESSES MUST BE ATLEAST ONE AT THIS POINT
+        // for (int i=0; i<*num_bg_processes; i++){
+        //     runSortedPipedCommands(bg_pipeCounts[i], background_processes_array[i], isFirstTime, home_dir, prev_dir_1, prev_dir_2, shell_PID, pasteventsarr, start, cur, arrlen);
+        // }
+        // runSortedPipedCommands(*fg_pipeCount, foreground_processes_array, isFirstTime, home_dir, prev_dir_1, prev_dir_2, shell_PID, pasteventsarr, start, cur, arrlen);
+        // // runBackgroundProcesses(foreground_processes_array, background_processes_array, num_bg_processes, num_bg_proc_args);
     }
 
     return;
 }
+
+        // jk = -1;
+        // char* concatenated_input= (char*)malloc(10000*sizeof(char));
+        // while (1){
+        //     jk++;
+        //     str= foreground_processes_array[jk];
+        //     if (str == NULL){
+        //         break;
+        //     }
+        //     strcat(str, " ");
+        //     strcat(concatenated_input, str);
+        // }
+        // printf("This is it: %s\n", concatenated_input);
+        // runPipedCommands(concatenated_input, isFirstTime, home_dir, prev_dir_1, prev_dir_2, shell_PID, pasteventsarr, start, cur, arrlen);
 
 // void handleInput(char* input, int* isFirstTime, char* home_dir, char* prev_dir_1, char* prev_dir_2, char* shell_PID, char** pasteventsarr, int* start, int* cur, int* arrlen){
 

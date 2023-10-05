@@ -7,6 +7,7 @@ int compare_strings(const void *a, const void *b) {
 }
 
 void peek(char* path, int a, int l, char* home_dir, char* prev_dir){
+    perror(path);
     if (strcmp(path, "-") == 0){
         strcpy(path, prev_dir);
     }

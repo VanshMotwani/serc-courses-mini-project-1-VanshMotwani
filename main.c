@@ -1,7 +1,39 @@
 #include "headers.h"
 
+void ctrl_z_handler(int signum) {
+    pid_t shell_pgid = getpgrp();
+
+    // Check if the shell is in the foreground
+    if (tcgetpgrp(STDIN_FILENO) == shell_pgid) {
+        // Get the PID of the foreground process
+        pid_t foreground_pid = tcgetpgrp(STDIN_FILENO);
+
+        // Check if there is a foreground process running
+        if (foreground_pid > 0) {
+            // Send the SIGSTOP signal to the foreground process
+            if (kill(foreground_pid, SIGSTOP) == 0) {
+                printf("Process with PID %d has been stopped.\n", foreground_pid);
+            } else {
+                perror("Error sending SIGSTOP");
+            }
+        } else {
+            printf("No foreground process is running.\n");
+        }
+    } else {
+        printf("The shell is not in the foreground.\n");
+    }
+}
+
 int main()
 {
+    int *BG_PIDs = (int *)malloc(100 * sizeof(int)); // Allocate an array of 100 integers
+
+    int *num_bg_proc = (int *)malloc(sizeof(int)); // Allocate an integer pointer
+
+    // Initialize num_bg_proc or set it to an initial value
+    *num_bg_proc = 0;
+
+    signal(SIGTSTP, ctrl_z_handler);
     // Keep accepting commands
     char home_dir[4096];  // A buffer to hold the directory path
 
@@ -97,7 +129,12 @@ int main()
         
         // int bg=1;
         // identify_and_execute(input, isFirstTime, home_dir, prev_dir_1, prev_dir_2, shell_PID, pasteventsarr, start, cur, arrlen, bg);
-        handleInput(input, isFirstTime, home_dir, prev_dir_1, prev_dir_2, shell_PID, pasteventsarr, start, cur, arrlen);
+        handleInput(input, isFirstTime, home_dir, prev_dir_1, prev_dir_2, shell_PID, pasteventsarr, start, cur, arrlen, BG_PIDs, num_bg_proc);
+
+        // for (int l=0; l<*num_bg_proc; l++){
+        //     int pid= BG_PIDs[l];
+
+        // }
     }
 }
 
